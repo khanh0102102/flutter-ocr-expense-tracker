@@ -98,7 +98,7 @@ class SettingsPage extends StatelessWidget {
           Card(
             color: Colors.redAccent,
             child: ListTile(
-              onTap: _clear,
+              onTap: () => _clear(context),
               leading: const Icon(Icons.delete_sweep, color: Colors.white),
               title: const Text(
                 'Clear local data',
