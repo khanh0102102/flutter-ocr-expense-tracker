@@ -88,7 +88,7 @@ class _CameraPageState extends State<CameraPage> {
       }
     } on CameraException catch (error) {
       _showMessage(
-        'Flash unavailable: ' + (error.description ?? error.code),
+        'Flash unavailable: ${error.description ?? error.code}',
       );
     }
   }
