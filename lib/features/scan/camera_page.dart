@@ -133,7 +133,7 @@ class _CameraPageState extends State<CameraPage> {
         await _process(File(image.path));
       }
     } catch (error) {
-      _showMessage('OCR failed: ' + error.toString());
+      _showMessage('OCR failed: ${error.toString()});
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -156,7 +156,7 @@ class _CameraPageState extends State<CameraPage> {
       final image = await controller.takePicture();
       await _process(File(image.path));
     } catch (error) {
-      _showMessage('Capture failed: ' + error.toString());
+      _showMessage('Capture failed: ${error.toString()});
     } finally {
       if (mounted) {
         setState(() => _busy = false);
