@@ -109,7 +109,7 @@ class _ReviewPageState extends State<ReviewPage> {
         Navigator.pop(context, true);
       }
     } catch (error) {
-      _msg('Save failed: ${error.toString()});
+      _msg('Save failed: ${error.toString()}');
     } finally {
       if (mounted) {
         setState(() => _saving = false);
