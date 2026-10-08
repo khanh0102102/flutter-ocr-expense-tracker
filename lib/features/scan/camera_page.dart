@@ -14,7 +14,30 @@ class _CameraPageState extends State<CameraPage>{
   @override void initState(){super.initState();_init();}
   Future<void> _init()async{try{final cs=await availableCameras();if(cs.isEmpty)throw StateError('No camera available');final c=CameraController(cs.firstWhere((x)=>x.lensDirection==CameraLensDirection.back,orElse:()=>cs.first),ResolutionPreset.high,enableAudio:false);await c.initialize();await c.setFlashMode(FlashMode.off);if(mounted)setState(()=>_camera=c);}catch(e){if(mounted)setState(()=>_error=e.toString());}finally{if(mounted)setState(()=>_loading=false);}}
   Future<void> _flashToggle()async{final c=_camera;if(c==null)return;final v=!_flash;await c.setFlashMode(v?FlashMode.torch:FlashMode.off);if(mounted)setState(()=>_flash=v);}
-  Future<void> _focus(TapUpDetails d)async{final c=_camera;if(c==null)return;final box=context.findRenderObject() as RenderBox;final p=box.globalToLocal(d.globalPosition);try{await c.setFocusPoint(Offset((p.dx/box.size.width).clamp(0,1),(p.dy/box.size.height).clamp(0,1)));}catch(_){ }}
+  Future<void> _focus(TapUpDetails details) async {
+    final controller = _camera;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+
+    final renderBox = context.findRenderObject();
+    if (renderBox is! RenderBox || renderBox.size.isEmpty) {
+      return;
+    }
+
+    final localPosition = renderBox.globalToLocal(details.globalPosition);
+    final point = Offset(
+      (localPosition.dx / renderBox.size.width).clamp(0.0, 1.0),
+      (localPosition.dy / renderBox.size.height).clamp(0.0, 1.0),
+    );
+
+    try {
+      await controller.setFocusPoint(point);
+    } on CameraException {
+      _showMessage('Manual focus is not supported by this camera.');
+    }
+  }
+
   Future<void> _pick(ImageSource source)async{if(_busy)return;setState(()=>_busy=true);try{final x=await _picker.pickImage(source:source,imageQuality:100);if(x!=null)await _process(File(x.path));}catch(e){_msg('OCR failed: $e');}finally{if(mounted)setState(()=>_busy=false);}}
   Future<void> _capture()async{final c=_camera;if(c==null||c.value.isTakingPicture||_busy)return;setState(()=>_busy=true);try{await _process(File((await c.takePicture()).path));}catch(e){_msg('Capture failed: $e');}finally{if(mounted)setState(()=>_busy=false);}}
   Future<void> _process(File source)async{final cropped=await ImageCropService.cropToReceiptFrame(source);final raw=await _ocr.recognize(cropped);final parsed=ReceiptParser().parse(raw);if(!mounted)return;final saved=await Navigator.push<bool>(context,MaterialPageRoute(builder:(_)=>ReviewPage(store:widget.store,imageFile:cropped,rawText:raw,parsed:parsed)));if(saved==true&&mounted)Navigator.pop(context);}
