@@ -8,7 +8,7 @@ import '../../data/services/image_storage_service.dart';
 import '../../state/expense_store.dart';
 import 'receipt_parser.dart';
 
-class ReviewPage extends StatefulWidget{const ReviewPage({super.key,required this.store,this.imageFile,required this.rawText,this.parsed});final ExpenseStore store;final File? imageFile;final String rawText;final ParsedReceipt parsed;@override State<ReviewPage> createState()=>_ReviewPageState();}
+class ReviewPage extends StatefulWidget{const ReviewPage({super.key,required this.store,this.imageFile,required this.rawText,required this.parsed,});final ExpenseStore store;final File? imageFile;final String rawText;final ParsedReceipt parsed;@override State<ReviewPage> createState()=>_ReviewPageState();}
 class _ReviewPageState extends State<ReviewPage>{
   final _id=const Uuid();late final TextEditingController _merchant,_amount,_notes;late DateTime _date;late ExpenseCategory _category;bool _saving=false;
   @override void initState(){super.initState();_merchant=TextEditingController(text:widget.parsed.merchant??'');_amount=TextEditingController(text:widget.parsed.amount?.toString()??'');_notes=TextEditingController();_date=widget.parsed.date??DateTime.now();_category=ExpenseCategory.food;}
