@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/utils/currency_utils.dart';
-import '../../data/models/expense.dart';
 import '../../state/expense_store.dart';
 import 'widgets/expense_card.dart';
 
