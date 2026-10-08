@@ -34,7 +34,7 @@ class _CameraPageState extends State<CameraPage>{
     try {
       await controller.setFocusPoint(point);
     } on CameraException {
-      _showMessage('Manual focus is not supported by this camera.');
+      _msg('Manual focus is not supported by this camera.');
     }
   }
 
