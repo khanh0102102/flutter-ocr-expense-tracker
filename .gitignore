@@ -1,0 +1,8 @@
+# Flutter/Dart
+.dart_tool/
+.pub/
+build/
+coverage/
+.idea/
+.vscode/
+*.iml
