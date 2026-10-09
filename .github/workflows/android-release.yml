@@ -14,6 +14,29 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --platforms=android .
+      - name: Add optional ML Kit script dependencies required by R8
+        shell: bash
+        run: |
+          if [ -f android/app/build.gradle.kts ]; then
+            gradle_file="android/app/build.gradle.kts"
+          elif [ -f android/app/build.gradle ]; then
+            gradle_file="android/app/build.gradle"
+          else
+            echo "Could not find the generated Android app Gradle file."
+            exit 1
+          fi
+
+          cat >> "$gradle_file" <<'EOF'
+
+          // The Flutter ML Kit bridge references these optional script classes.
+          // Include their libraries so R8 can resolve all references in release builds.
+          dependencies {
+              implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+              implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+              implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+              implementation("com.google.mlkit:text-recognition-korean:16.0.1")
+          }
+          EOF
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
