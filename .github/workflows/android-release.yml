@@ -12,7 +12,6 @@ jobs:
           channel: stable
           cache: true
       - run: flutter create --platforms=android .
-      - run: rm -f test/widget_test.dart
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
@@ -21,3 +20,4 @@ jobs:
         with:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
