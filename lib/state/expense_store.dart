@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../core/utils/date_utils.dart';
 import '../data/models/expense.dart';
 import '../data/repositories/expense_repository.dart';
+import '../data/services/image_storage_service.dart';
 
 class ExpenseStore extends ChangeNotifier {
   ExpenseStore(this._repository);
@@ -46,6 +47,19 @@ class ExpenseStore extends ChangeNotifier {
     await _repository.delete(expense.id);
     _expenses = _expenses.where((item) => item.id != expense.id).toList();
     notifyListeners();
+
+    // The database row is already deleted; cleanup should not undo the UI
+    // update if a stale or locked image file cannot be removed.
+    try {
+      await ImageStorageService.removeForExpense(
+        imagePath: expense.imagePath,
+        thumbnailPath: expense.thumbnailPath,
+      );
+    } catch (error) {
+      debugPrint(
+        'Could not remove receipt files for expense ${expense.id}: $error',
+      );
+    }
   }
 
   Future<void> clearAll() async {
