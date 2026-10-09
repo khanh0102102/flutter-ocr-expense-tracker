@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -46,3 +48,17 @@ jobs:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+      - name: Publish APK as a GitHub Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: OCR Expense Tracker v1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            Android release for Mini-Project 3: OCR Expense Tracker.
+
+            Includes on-device receipt OCR, heuristic receipt parsing, SQLite expense storage,
+            receipt thumbnails, and CustomPainter spending charts.
+          files: build/app/outputs/flutter-apk/app-release.apk
+          fail_on_unmatched_files: true
