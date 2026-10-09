@@ -22,26 +22,26 @@ class ParsedReceipt {
 
 class ReceiptParser {
   static final _date =
-      RegExp(r'\\b([0-3]?\\d)[/.-]([01]?\\d)[/.-](20\\d{2})\\b');
+      RegExp(r'\b([0-3]?\d)[/.-]([01]?\d)[/.-](20\d{2})\b');
   static final _iso =
-      RegExp(r'\\b(20\\d{2})[/.-]([01]?\\d)[/.-]([0-3]?\\d)\\b');
+      RegExp(r'\b(20\d{2})[/.-]([01]?\d)[/.-]([0-3]?\d)\b');
 
   static final _total = RegExp(
-    r'(?:TỔNG\\s*(?:CỘNG|TIỀN)|TONG\\s*(?:CONG|TIEN)|GRAND\\s*TOTAL|TOTAL|THANH\\s*TOÁN|THANH\\s*TOAN|AMOUNT\\s*DUE)\\s*[:\\-]?\\s*([0-9][0-9., ]{2,})',
+    r'(?:TỔNG\s*(?:CỘNG|TIỀN)|TONG\s*(?:CONG|TIEN)|GRAND\s*TOTAL|TOTAL|THANH\s*TOÁN|THANH\s*TOAN|AMOUNT\s*DUE)\s*[:\-]?\s*([0-9][0-9., ]{2,})',
     caseSensitive: false,
   );
 
-  // Avoid \\b after currency symbols such as "đ" and "₫": they are
+  // Avoid \b after currency symbols such as "đ" and "₫": they are
   // non-word characters, so a word-boundary assertion can reject valid values.
   static final _money = RegExp(
-    r'([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{4,9})\\s*(?:VND|VNĐ|đ|₫)(?![A-Za-zÀ-ỹ])',
+    r'([0-9]{1,3}(?:[.,][0-9]{3})+|[0-9]{4,9})\s*(?:VND|VNĐ|đ|₫)(?![A-Za-zÀ-ỹ])',
     caseSensitive: false,
   );
 
   ParsedReceipt parse(String text) {
     final lines = text
-        .replaceAll('\\r', '')
-        .split('\\n')
+        .replaceAll('\r', '')
+        .split('\n')
         .map((line) => line.trim())
         .where((line) => line.isNotEmpty)
         .toList();
@@ -65,10 +65,10 @@ class ReceiptParser {
         'TEL',
       ];
       if (ignoredLabels.any(upper.contains)) continue;
-      if (RegExp(r'^\\d[\\d\\s.,:/-]*$').hasMatch(line)) continue;
+      if (RegExp(r'^\d[\d\s.,:/-]*$').hasMatch(line)) continue;
 
       if (RegExp(r'[A-Za-zÀ-ỹ]').hasMatch(line)) {
-        merchant = line.replaceAll(RegExp(r'\\s+'), ' ');
+        merchant = line.replaceAll(RegExp(r'\s+'), ' ');
         merchantConfidence = 0.55;
         break;
       }
