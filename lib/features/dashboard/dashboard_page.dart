@@ -15,6 +15,16 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Listen here instead of relying on the parent shell to rebuild this page.
+    // This keeps totals, charts and recent expenses in sync immediately after
+    // an expense is saved, edited, deleted, or the store is reloaded.
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) => _buildDashboard(context),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context) {
     final recent = store.expenses.take(5).toList();
     final children = <Widget>[
       Row(
