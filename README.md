@@ -4,11 +4,11 @@ A production-style Flutter 3.x mini-project that turns physical receipts into ed
 
 ## Features
 
-- Camera viewfinder with receipt framing overlay
+- Camera viewfinder with receipt framing overlay (optional)
 - Flash/torch toggle
 - Tap-to-focus
-- Gallery import
-- Deterministic receipt crop pipeline
+- Import a receipt image from the device gallery/files, including when no camera is available
+- Full-image OCR for imported receipts; only camera-viewfinder captures are cropped to the framing overlay
 - Google ML Kit on-device text recognition
 - Regex/heuristic extraction of merchant, VND total and date
 - Confidence indicators and mandatory human review
@@ -22,7 +22,7 @@ A production-style Flutter 3.x mini-project that turns physical receipts into ed
 
 ## Architecture
 
-Camera -> Crop -> ML Kit -> Regex Parser -> Review -> SQLite -> Dashboard
+Camera capture or gallery import -> (camera-only frame crop) -> ML Kit -> Regex Parser -> Review -> SQLite -> Dashboard
 
 Layers:
 - features/: presentation and user workflows
@@ -37,7 +37,7 @@ Layers:
 - Dart 3.12+
 - Android Studio / Android SDK for Android
 - Xcode for iOS
-- Physical device or emulator with camera support
+- Camera hardware is optional when importing an existing receipt image
 
 ## Run
 
@@ -60,7 +60,7 @@ The GitHub Actions release workflow can build the APK in CI.
 
 ## OCR notes
 
-ML Kit recognition is performed on-device for the supported mobile platforms. OCR output is treated as untrusted input: the parser supplies confidence values and the user must review fields before persistence.
+ML Kit recognition is performed on-device for the supported mobile platforms. OCR output is treated as untrusted input: the parser supplies confidence values and the user must review fields before persistence. For best results, use a well-lit, straight-on image where the entire receipt is visible.
 
 ## Data model
 

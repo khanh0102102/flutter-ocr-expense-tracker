@@ -58,6 +58,8 @@ class _CameraPageState extends State<CameraPage> {
 
       if (mounted) {
         setState(() => _camera = controller);
+      } else {
+        await controller.dispose();
       }
     } catch (error) {
       if (mounted) {
@@ -68,6 +70,25 @@ class _CameraPageState extends State<CameraPage> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _retryCamera() async {
+    if (_loading) {
+      return;
+    }
+
+    await _camera?.dispose();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _camera = null;
+      _error = null;
+      _loading = true;
+      _flash = false;
+    });
+    await _initializeCamera();
   }
 
   Future<void> _toggleFlash() async {
@@ -130,6 +151,8 @@ class _CameraPageState extends State<CameraPage> {
       );
 
       if (image != null) {
+        // Imported images are processed in full. Only photos taken using the
+        // in-app viewfinder are cropped to its receipt frame.
         await _process(File(image.path));
       }
     } catch (error) {
@@ -154,7 +177,7 @@ class _CameraPageState extends State<CameraPage> {
 
     try {
       final image = await controller.takePicture();
-      await _process(File(image.path));
+      await _process(File(image.path), cropToReceiptFrame: true);
     } catch (error) {
       _showMessage('Capture failed: ${error.toString()}');
     } finally {
@@ -164,9 +187,14 @@ class _CameraPageState extends State<CameraPage> {
     }
   }
 
-  Future<void> _process(File source) async {
-    final cropped = await ImageCropService.cropToReceiptFrame(source);
-    final rawText = await _ocr.recognize(cropped);
+  Future<void> _process(
+    File source, {
+    bool cropToReceiptFrame = false,
+  }) async {
+    final imageForOcr = cropToReceiptFrame
+        ? await ImageCropService.cropToReceiptFrame(source)
+        : source;
+    final rawText = await _ocr.recognize(imageForOcr);
     final parsed = ReceiptParser().parse(rawText);
 
     if (!mounted) {
@@ -178,7 +206,7 @@ class _CameraPageState extends State<CameraPage> {
       MaterialPageRoute(
         builder: (_) => ReviewPage(
           store: widget.store,
-          imageFile: cropped,
+          imageFile: imageForOcr,
           rawText: rawText,
           parsed: parsed,
         ),
@@ -216,16 +244,100 @@ class _CameraPageState extends State<CameraPage> {
       );
     }
 
+    // Do not block the gallery/file-import workflow when an emulator or
+    // device has no usable camera.
     if (_error != null) {
       return Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              _error!,
-              style: const TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
+        backgroundColor: const Color(0xFF101114),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF101114),
+          foregroundColor: Colors.white,
+          title: const Text('Import receipt'),
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+            tooltip: 'Close',
+          ),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.image_search_outlined,
+                      size: 76,
+                      color: Colors.white70,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'No camera available',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'You can still scan a receipt by choosing an image '
+                      'from your device. The app will read the image on-device '
+                      'and let you review the detected details before saving.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white70,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => _pick(ImageSource.gallery),
+                        icon: _busy
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.upload_file),
+                        label: Text(
+                          _busy ? 'Processing image...' : 'Choose receipt image',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _retryCamera,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try camera again'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -273,7 +385,8 @@ class _CameraPageState extends State<CameraPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      onPressed: () => _pick(ImageSource.gallery),
+                      tooltip: 'Choose receipt image',
+                      onPressed: _busy ? null : () => _pick(ImageSource.gallery),
                       icon: const Icon(
                         Icons.photo_library,
                         color: Colors.white,
@@ -287,7 +400,8 @@ class _CameraPageState extends State<CameraPage> {
                           : const Icon(Icons.camera_alt),
                     ),
                     IconButton(
-                      onPressed: () => _pick(ImageSource.camera),
+                      tooltip: 'Take photo with device camera',
+                      onPressed: _busy ? null : () => _pick(ImageSource.camera),
                       icon: const Icon(
                         Icons.document_scanner,
                         color: Colors.white,
