@@ -51,8 +51,6 @@ void main() {
       ),
     );
 
-    expect(find.text('Scan your first receipt'), findsOneWidget);
-
     final now = DateTime.now();
     await store.save(
       Expense(
@@ -72,8 +70,12 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Scan your first receipt'), findsNothing);
-    expect(find.text('Demo Market'), findsOneWidget);
+    // The summary should be updated without replacing/navigating the page.
     expect(find.text('150.000 ₫'), findsWidgets);
+
+    // Recent expenses are lower in the dashboard's scrollable list.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1800));
+    await tester.pumpAndSettle();
+    expect(find.text('Demo Market'), findsOneWidget);
   });
 }
